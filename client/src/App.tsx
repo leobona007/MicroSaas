@@ -15,16 +15,20 @@ import FinancePage from "@/pages/admin/finance-page";
 import ReportsPage from "@/pages/admin/reports-page";
 import ServicesPage from "@/pages/admin/services-page";
 import ProfessionalsPage from "@/pages/admin/professionals-page";
+import LandingPage from "@/pages/landing-page";
 
 function Router() {
   return (
     <Switch>
+      {/* Landing Page */}
+      <Route path="/" component={LandingPage} />
+
       {/* Auth Route */}
       <Route path="/auth" component={AuthPage} />
-      
+
       {/* Client Routes */}
-      <ProtectedRoute path="/" component={BookingPage} />
-      
+      <ProtectedRoute path="/booking" component={BookingPage} />
+
       {/* Admin Routes */}
       <ProtectedRoute path="/admin" component={DashboardPage} />
       <ProtectedRoute path="/admin/schedule" component={SchedulePage} />
@@ -33,7 +37,7 @@ function Router() {
       <ProtectedRoute path="/admin/reports" component={ReportsPage} />
       <ProtectedRoute path="/admin/services" component={ServicesPage} />
       <ProtectedRoute path="/admin/professionals" component={ProfessionalsPage} />
-      
+
       {/* Fallback to 404 */}
       <Route component={NotFound} />
     </Switch>
