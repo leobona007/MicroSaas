@@ -10,7 +10,7 @@ import {
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { db } from "./db";
-import { eq, and } from "drizzle-orm";
+import { eq, and, inArray } from "drizzle-orm";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -174,29 +174,36 @@ export class DatabaseStorage implements IStorage {
       return [];
     }
 
+    // Usando inArray em vez de multiple OR conditions
     return await db.select()
       .from(services)
-      .where(
-        serviceIds.map(id => eq(services.id, id)).reduce((acc, curr) => acc || curr)
-      );
+      .where(inArray(services.id, serviceIds));
   }
 
   async getServiceProfessionals(serviceId: number): Promise<Professional[]> {
+    console.log(`Buscando profissionais para o serviço com ID: ${serviceId}`);
+
     const ps = await db.select()
       .from(professionalServices)
       .where(eq(professionalServices.serviceId, serviceId));
 
     const professionalIds = ps.map(p => p.professionalId);
+    console.log(`IDs de profissionais encontrados: ${professionalIds.join(', ')}`);
 
     if (professionalIds.length === 0) {
+      console.log("Nenhum profissional encontrado para este serviço");
       return [];
     }
 
-    return await db.select()
+    // Usando inArray em vez de multiple OR conditions
+    const result = await db.select()
       .from(professionals)
-      .where(
-        professionalIds.map(id => eq(professionals.id, id)).reduce((acc, curr) => acc || curr)
-      );
+      .where(inArray(professionals.id, professionalIds));
+
+    console.log(`Profissionais encontrados: ${result.length}`);
+    console.log(`Detalhes: ${JSON.stringify(result)}`);
+
+    return result;
   }
 
   async addServiceToProfessional(insertProfessionalService: InsertProfessionalService): Promise<ProfessionalService> {
@@ -270,9 +277,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async createAppointment(insertAppointment: InsertAppointment): Promise<Appointment> {
+    console.log(`Criando agendamento: ${JSON.stringify(insertAppointment)}`);
+
     const [appointment] = await db.insert(appointments)
       .values(insertAppointment)
       .returning();
+
+    console.log(`Agendamento criado: ${JSON.stringify(appointment)}`);
     return appointment;
   }
 

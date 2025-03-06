@@ -25,10 +25,12 @@ import {
   TabsList,
   TabsTrigger,
 } from "@/components/ui/tabs";
-import { Scissors, User, Mail, Lock } from "lucide-react";
+import { Scissors, User, Mail, Lock, Facebook, Apple } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { useEffect, useState } from "react";
 import { useLocation } from "wouter";
+import { FaGoogle, FaFacebook, FaApple } from "react-icons/fa";
+import { Separator } from "@/components/ui/separator";
 
 const loginSchema = z.object({
   username: z.string().min(1, {
@@ -103,6 +105,22 @@ export default function AuthPage() {
     });
   };
 
+  // Social login handlers - serão implementados quando as APIs estiverem disponíveis
+  const handleGoogleLogin = () => {
+    // Implementação futura
+    console.log("Login com Google");
+  };
+
+  const handleAppleLogin = () => {
+    // Implementação futura
+    console.log("Login com Apple");
+  };
+
+  const handleFacebookLogin = () => {
+    // Implementação futura
+    console.log("Login com Facebook");
+  };
+
   return (
     <div className="flex min-h-screen flex-col-reverse md:flex-row">
       {/* Login/Register Form */}
@@ -123,9 +141,51 @@ export default function AuthPage() {
                 <TabsTrigger value="login">Login</TabsTrigger>
                 <TabsTrigger value="register">Cadastro</TabsTrigger>
               </TabsList>
-              
+
               {/* Login Form */}
               <TabsContent value="login">
+                {/* Social Login Buttons */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={handleGoogleLogin}
+                    type="button"
+                  >
+                    <FaGoogle className="mr-2 h-4 w-4 text-red-500" />
+                    <span className="sr-only md:not-sr-only md:text-xs md:font-normal">Google</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={handleAppleLogin}
+                    type="button"
+                  >
+                    <FaApple className="mr-2 h-4 w-4" />
+                    <span className="sr-only md:not-sr-only md:text-xs md:font-normal">Apple</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={handleFacebookLogin}
+                    type="button"
+                  >
+                    <FaFacebook className="mr-2 h-4 w-4 text-blue-600" />
+                    <span className="sr-only md:not-sr-only md:text-xs md:font-normal">Facebook</span>
+                  </Button>
+                </div>
+
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-background px-2 text-xs text-muted-foreground">
+                      ou continue com
+                    </span>
+                  </div>
+                </div>
+
                 <Form {...loginForm}>
                   <form onSubmit={loginForm.handleSubmit(onLoginSubmit)} className="space-y-4">
                     <FormField
@@ -148,7 +208,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={loginForm.control}
                       name="password"
@@ -170,7 +230,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <Button 
                       type="submit" 
                       className="w-full bg-purple-700 hover:bg-purple-800" 
@@ -181,9 +241,51 @@ export default function AuthPage() {
                   </form>
                 </Form>
               </TabsContent>
-              
+
               {/* Register Form */}
               <TabsContent value="register">
+                {/* Social Register Buttons */}
+                <div className="grid grid-cols-3 gap-3 mb-4">
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={handleGoogleLogin}
+                    type="button"
+                  >
+                    <FaGoogle className="mr-2 h-4 w-4 text-red-500" />
+                    <span className="sr-only md:not-sr-only md:text-xs md:font-normal">Google</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={handleAppleLogin}
+                    type="button"
+                  >
+                    <FaApple className="mr-2 h-4 w-4" />
+                    <span className="sr-only md:not-sr-only md:text-xs md:font-normal">Apple</span>
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    className="w-full" 
+                    onClick={handleFacebookLogin}
+                    type="button"
+                  >
+                    <FaFacebook className="mr-2 h-4 w-4 text-blue-600" />
+                    <span className="sr-only md:not-sr-only md:text-xs md:font-normal">Facebook</span>
+                  </Button>
+                </div>
+
+                <div className="relative my-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <Separator className="w-full" />
+                  </div>
+                  <div className="relative flex justify-center">
+                    <span className="bg-background px-2 text-xs text-muted-foreground">
+                      ou cadastre-se com
+                    </span>
+                  </div>
+                </div>
+
                 <Form {...registerForm}>
                   <form onSubmit={registerForm.handleSubmit(onRegisterSubmit)} className="space-y-3">
                     <FormField
@@ -206,7 +308,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={registerForm.control}
                       name="email"
@@ -228,7 +330,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={registerForm.control}
                       name="username"
@@ -249,7 +351,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <FormField
                       control={registerForm.control}
                       name="password"
@@ -271,7 +373,7 @@ export default function AuthPage() {
                         </FormItem>
                       )}
                     />
-                    
+
                     <Button 
                       type="submit" 
                       className="w-full bg-purple-700 hover:bg-purple-800 mt-3" 
@@ -313,7 +415,7 @@ export default function AuthPage() {
           </CardFooter>
         </Card>
       </div>
-      
+
       {/* Hero Section */}
       <div className="w-full md:w-1/2 bg-gradient-to-br from-[#a90eb3] to-[#e3a000] flex flex-col items-center justify-center text-white p-6 md:p-10">
         <div className="max-w-lg mx-auto text-center">

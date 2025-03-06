@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/select";
 import { Header } from "@/components/layout/header";
 import { apiRequest, queryClient } from "@/lib/queryClient";
-import { Service, Professional, WorkSchedule } from "@shared/schema";
+import { Service, Professional, WorkSchedule, Appointment } from "@shared/schema";
 import { useAuth } from "@/hooks/use-auth";
 import { ConfirmationDialog } from "./confirmation-dialog";
 import { useToast } from "@/hooks/use-toast";
@@ -45,13 +45,13 @@ export default function BookingPage() {
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
   const [selectedProfessional, setSelectedProfessional] = useState<number | null>(null);
   const [isConfirmationOpen, setIsConfirmationOpen] = useState(false);
-  
+
   // Reset selected time and professional when service or date changes
   useEffect(() => {
     setSelectedTimeSlot(null);
     setSelectedProfessional(null);
   }, [selectedService, date]);
-  
+
   // Fetch services
   const { data: services = [] } = useQuery<Service[]>({
     queryKey: ["/api/services"],
@@ -62,19 +62,19 @@ export default function BookingPage() {
     queryKey: ["/api/services", selectedService, "professionals"],
     enabled: !!selectedService,
   });
-  
+
   // Fetch work schedules for the selected professional
   const { data: workSchedules = [] } = useQuery<WorkSchedule[]>({
     queryKey: ["/api/professionals", selectedProfessional, "schedules"],
     enabled: !!selectedProfessional,
   });
-  
+
   // Fetch existing appointments to check availability
-  const { data: appointments = [] } = useQuery({
+  const { data: appointments = [], isLoading: isAppointmentsLoading } = useQuery<Appointment[]>({
     queryKey: ["/api/appointments", date ? format(date, "yyyy-MM-dd") : null],
     enabled: !!date && !!selectedService && !!selectedProfessional,
   });
-  
+
   // Create appointment mutation
   const createAppointmentMutation = useMutation({
     mutationFn: async (appointmentData: any) => {
@@ -86,13 +86,13 @@ export default function BookingPage() {
         title: "Agendamento confirmado!",
         description: "Seu horário foi reservado com sucesso.",
       });
-      
+
       // Reset form and close confirmation
       setSelectedService(null);
       setSelectedTimeSlot(null);
       setSelectedProfessional(null);
       setIsConfirmationOpen(false);
-      
+
       // Invalidate appointments query to refresh data
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
     },
@@ -104,61 +104,60 @@ export default function BookingPage() {
       });
     }
   });
-  
+
   // Find selected service details
   const serviceDetails = services.find(s => s.id === selectedService);
-  
+
   // Find selected professional details
   const professionalDetails = professionals.find(p => p.id === selectedProfessional);
-  
+
   // Generate available time slots based on work schedules and existing appointments
   const getAvailableTimeSlots = () => {
     if (!date || !selectedService || !selectedProfessional || !serviceDetails) {
       return [];
     }
-    
+
     const dayOfWeek = date.getDay();
     const professionalSchedule = workSchedules.find(ws => ws.professionalId === selectedProfessional && ws.dayOfWeek === dayOfWeek);
-    
+
     if (!professionalSchedule) {
       return []; // Professional doesn't work on this day
     }
-    
+
     const serviceDuration = serviceDetails.duration;
     const startTime = parse(professionalSchedule.startTime as string, "HH:mm:ss", new Date());
     const endTime = parse(professionalSchedule.endTime as string, "HH:mm:ss", new Date());
-    
+
     // Generate 30-minute slots
     const slots = [];
     let currentTime = startTime;
-    
+
     while (currentTime < endTime) {
       const timeString = format(currentTime, "HH:mm");
-      
+
       // Check if this slot is available (not booked already)
       const isSlotAvailable = !appointments.some(app => {
-        const appStartTime = app.startTime as string;
-        return app.professionalId === selectedProfessional && appStartTime === timeString;
+        return app.professionalId === selectedProfessional && app.startTime === timeString;
       });
-      
+
       // Check if there's enough time for the service
       const serviceEndTime = addDays(currentTime, 0);
       serviceEndTime.setMinutes(serviceEndTime.getMinutes() + serviceDuration);
       const isEnoughTime = serviceEndTime <= endTime;
-      
+
       if (isSlotAvailable && isEnoughTime) {
         slots.push(timeString);
       }
-      
+
       // Increment by 30 minutes
       currentTime.setMinutes(currentTime.getMinutes() + 30);
     }
-    
+
     return slots;
   };
-  
+
   const availableTimeSlots = getAvailableTimeSlots();
-  
+
   const handleBookingConfirmation = () => {
     if (!user || !date || !selectedService || !selectedTimeSlot || !selectedProfessional || !serviceDetails) {
       toast({
@@ -168,16 +167,16 @@ export default function BookingPage() {
       });
       return;
     }
-    
+
     // Calculate end time based on service duration
     const startTimeParts = selectedTimeSlot.split(':').map(Number);
     const startDate = new Date(date);
     startDate.setHours(startTimeParts[0], startTimeParts[1], 0);
-    
+
     const endDate = new Date(startDate);
     endDate.setMinutes(endDate.getMinutes() + serviceDetails.duration);
     const endTime = format(endDate, "HH:mm");
-    
+
     // Create appointment
     createAppointmentMutation.mutate({
       userId: user.id,
@@ -189,7 +188,7 @@ export default function BookingPage() {
       status: "scheduled"
     });
   };
-  
+
   const handleConfirmationOpen = () => {
     if (!selectedService || !selectedTimeSlot || !selectedProfessional) {
       toast({
@@ -199,23 +198,23 @@ export default function BookingPage() {
       });
       return;
     }
-    
+
     setIsConfirmationOpen(true);
   };
-  
+
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col bg-background">
       <Header />
-      
-      <main className="flex-1 container py-8">
+
+      <main className="flex-1 container max-w-7xl mx-auto px-4 sm:px-6 py-8">
         <div className="mb-8 text-center">
           <h1 className="text-3xl font-bold tracking-tight">Agendamento de Serviços</h1>
           <p className="text-muted-foreground mt-2">
             Escolha o serviço, data, horário e profissional para agendar seu atendimento
           </p>
         </div>
-        
-        <div className="grid gap-8 md:grid-cols-12">
+
+        <div className="grid gap-6 md:gap-8 md:grid-cols-12">
           {/* Service selection */}
           <Card className="md:col-span-4">
             <CardHeader>
@@ -251,7 +250,7 @@ export default function BookingPage() {
               </RadioGroup>
             </CardContent>
           </Card>
-          
+
           {/* Date and time selection */}
           <Card className="md:col-span-4">
             <CardHeader>
@@ -294,11 +293,13 @@ export default function BookingPage() {
                   </Popover>
                 </div>
               </div>
-              
-              {date && selectedService && (
+
+              {date && selectedService && selectedProfessional && (
                 <div className="space-y-2">
                   <h3 className="font-medium text-sm">Horários Disponíveis</h3>
-                  {availableTimeSlots.length > 0 ? (
+                  {isAppointmentsLoading ? (
+                    <p className="text-sm text-muted-foreground">Carregando horários...</p>
+                  ) : availableTimeSlots.length > 0 ? (
                     <div className="grid grid-cols-3 gap-2">
                       {availableTimeSlots.map((timeSlot) => (
                         <Button
@@ -316,16 +317,14 @@ export default function BookingPage() {
                     </div>
                   ) : (
                     <p className="text-sm text-muted-foreground">
-                      {!selectedProfessional
-                        ? "Selecione um profissional para ver os horários disponíveis"
-                        : "Não há horários disponíveis para esta data"}
+                      Não há horários disponíveis para esta data
                     </p>
                   )}
                 </div>
               )}
             </CardContent>
           </Card>
-          
+
           {/* Professional selection */}
           <Card className="md:col-span-4">
             <CardHeader>
@@ -362,7 +361,7 @@ export default function BookingPage() {
             </CardContent>
           </Card>
         </div>
-        
+
         {/* Booking summary and submit button */}
         <Card className="mt-8">
           <CardHeader>
@@ -391,9 +390,9 @@ export default function BookingPage() {
               </div>
             </div>
           </CardContent>
-          <CardFooter className="flex flex-col items-start gap-4">
-            <Button 
-              className="w-full md:w-auto bg-purple-700 hover:bg-purple-800" 
+          <CardFooter className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <Button
+              className="w-full sm:w-auto bg-purple-700 hover:bg-purple-800"
               size="lg"
               onClick={handleConfirmationOpen}
               disabled={!selectedService || !selectedTimeSlot || !selectedProfessional || createAppointmentMutation.isPending}
@@ -402,7 +401,7 @@ export default function BookingPage() {
             </Button>
           </CardFooter>
         </Card>
-        
+
         {/* Footer with map */}
         <footer className="mt-16 border-t pt-8">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
@@ -410,9 +409,9 @@ export default function BookingPage() {
               <h3 className="text-lg font-medium">Salão de Beleza & Barbearia</h3>
               <div className="flex items-center gap-1 mt-2 text-muted-foreground">
                 <MapPin className="h-4 w-4" />
-                <a 
-                  href="https://maps.google.com/?q=Salão+de+Beleza" 
-                  target="_blank" 
+                <a
+                  href="https://maps.google.com/?q=Salão+de+Beleza"
+                  target="_blank"
                   rel="noopener noreferrer"
                   className="text-sm hover:underline"
                 >
@@ -422,25 +421,25 @@ export default function BookingPage() {
               <p className="text-sm text-muted-foreground mt-1">Telefone: (11) 5555-5555</p>
             </div>
             <div className="flex items-center gap-4">
-              <a 
-                href="https://instagram.com" 
-                target="_blank" 
+              <a
+                href="https://instagram.com"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground"
               >
                 Instagram
               </a>
-              <a 
-                href="https://facebook.com" 
-                target="_blank" 
+              <a
+                href="https://facebook.com"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground"
               >
                 Facebook
               </a>
-              <a 
-                href="https://whatsapp.com" 
-                target="_blank" 
+              <a
+                href="https://whatsapp.com"
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-muted-foreground hover:text-foreground"
               >
@@ -454,7 +453,7 @@ export default function BookingPage() {
           </p>
         </footer>
       </main>
-      
+
       {/* Confirmation Dialog */}
       <ConfirmationDialog
         open={isConfirmationOpen}
