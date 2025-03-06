@@ -12,7 +12,7 @@ import {
   LogOut
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useState, useEffect } from "react";
+import { useState, useEffect, ReactNode } from "react";
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
@@ -23,9 +23,10 @@ import React from 'react';
 
 interface SidebarProps {
   className?: string;
+  children?: ReactNode;
 }
 
-export function Sidebar({ className }: SidebarProps) {
+export function Sidebar({ className, children }: SidebarProps) {
   const [location] = useLocation();
   const { logoutMutation } = useAuth();
   const isMobile = useMobile();
@@ -81,7 +82,7 @@ export function Sidebar({ className }: SidebarProps) {
   // For mobile: use Sheet component from shadcn UI for a slide-in sidebar
   if (isMobile) {
     return (
-      <>
+      <div className="flex min-h-screen bg-background">
         <Sheet>
           <SheetTrigger asChild>
             <Button 
@@ -140,15 +141,17 @@ export function Sidebar({ className }: SidebarProps) {
           </SheetContent>
         </Sheet>
 
-        {/* Add padding to the content area for the fixed toggle button */}
-        <div className="w-0"></div>
-      </>
+        {/* Main content with padding for the button */}
+        <div className="flex-1 pt-14 px-4 sm:px-6 lg:px-8">
+          {children}
+        </div>
+      </div>
     );
   }
 
   // For desktop: use traditional sidebar with toggle
   return (
-    <>
+    <div className="flex min-h-screen bg-background">
       <Button 
         variant="outline" 
         size="icon"
@@ -220,12 +223,16 @@ export function Sidebar({ className }: SidebarProps) {
         </div>
       </aside>
 
-      {/* Adjustable margin for content */}
-      <div className={cn(
-        "transition-all duration-300",
-        open ? "lg:ml-64" : "lg:ml-16",
-        "ml-0" // No margin on mobile since we're using Sheet
-      )}></div>
-    </>
+      {/* Main content that adjusts based on sidebar state */}
+      <div 
+        className={cn(
+          "flex-1 transition-all duration-300", 
+          open ? "md:ml-64" : "md:ml-16",
+          "ml-0 p-4 sm:p-6 lg:p-8" // Add padding to all sides
+        )}
+      >
+        {children}
+      </div>
+    </div>
   );
 }

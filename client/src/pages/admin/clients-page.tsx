@@ -54,7 +54,7 @@ export default function ClientsPage() {
   const [selectedClient, setSelectedClient] = useState<User | null>(null);
   const [clientDetailsOpen, setClientDetailsOpen] = useState(false);
   const [newClientOpen, setNewClientOpen] = useState(false);
-  
+
   // Fetch clients (all users with role "client")
   const { data: allUsers = [], isLoading: isUsersLoading } = useQuery<User[]>({
     queryKey: ["/api/users"],
@@ -65,16 +65,16 @@ export default function ClientsPage() {
       if (!res.ok) {
         return []; // Return empty array if not authenticated or error
       }
-      
+
       // Return current user as an array for now
       const user = await res.json();
       return [user];
     },
   });
-  
+
   // Filter clients (only users with role "client")
   const clients = allUsers.filter(user => user.role === "client");
-  
+
   // Fetch appointments for client details
   const { data: clientAppointments = [] } = useQuery<Appointment[]>({
     queryKey: ["/api/appointments", selectedClient?.id],
@@ -85,7 +85,7 @@ export default function ClientsPage() {
       return [];
     },
   });
-  
+
   // Create new client mutation
   const createClientMutation = useMutation({
     mutationFn: async (data: InsertUser) => {
@@ -108,7 +108,7 @@ export default function ClientsPage() {
       });
     },
   });
-  
+
   // New client form schema
   const formSchema = z.object({
     name: z.string().min(1, "Nome é obrigatório"),
@@ -119,7 +119,7 @@ export default function ClientsPage() {
     username: z.string().min(3, "Nome de usuário deve ter pelo menos 3 caracteres"),
     password: z.string().min(6, "Senha deve ter pelo menos 6 caracteres"),
   });
-  
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -132,7 +132,7 @@ export default function ClientsPage() {
       password: "",
     },
   });
-  
+
   const onSubmit = (values: z.infer<typeof formSchema>) => {
     createClientMutation.mutate({
       ...values,
@@ -140,11 +140,11 @@ export default function ClientsPage() {
       profilePicture: "",
     });
   };
-  
+
   // Filter clients based on search query
   const filteredClients = clients.filter(client => {
     if (!searchQuery) return true;
-    
+
     const query = searchQuery.toLowerCase();
     return (
       client.name.toLowerCase().includes(query) ||
@@ -152,35 +152,33 @@ export default function ClientsPage() {
       (client.phone && client.phone.includes(query))
     );
   });
-  
+
   // View client details
   const handleViewClient = (client: User) => {
     setSelectedClient(client);
     setClientDetailsOpen(true);
   };
-  
+
   // Calculate client metrics
   const getMostFrequentService = (clientId: number) => {
     // In a real app, you would analyze client appointments
     // For now, return a placeholder
     return "Corte de Cabelo";
   };
-  
+
   const getLastProfessional = (clientId: number) => {
     // In a real app, you would analyze client appointments
     // For now, return a placeholder
     return "John Smith";
   };
-  
+
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      
-      <div className="flex-1 flex flex-col ml-64">
+    <Sidebar>
+      <div className="flex-1 flex flex-col"> {/* Removed ml-64 */}
         <div className="p-8">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
-            
+
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -192,7 +190,7 @@ export default function ClientsPage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              
+
               <Dialog open={newClientOpen} onOpenChange={setNewClientOpen}>
                 <DialogTrigger asChild>
                   <Button>
@@ -207,7 +205,7 @@ export default function ClientsPage() {
                       Preencha os dados abaixo para cadastrar um novo cliente.
                     </DialogDescription>
                   </DialogHeader>
-                  
+
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
                       <FormField
@@ -223,7 +221,7 @@ export default function ClientsPage() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
@@ -238,7 +236,7 @@ export default function ClientsPage() {
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="phone"
@@ -253,7 +251,7 @@ export default function ClientsPage() {
                           )}
                         />
                       </div>
-                      
+
                       <FormField
                         control={form.control}
                         name="address"
@@ -267,7 +265,7 @@ export default function ClientsPage() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="instagram"
@@ -281,7 +279,7 @@ export default function ClientsPage() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
@@ -296,7 +294,7 @@ export default function ClientsPage() {
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="password"
@@ -311,7 +309,7 @@ export default function ClientsPage() {
                           )}
                         />
                       </div>
-                      
+
                       <DialogFooter>
                         <Button
                           type="button"
@@ -330,7 +328,7 @@ export default function ClientsPage() {
               </Dialog>
             </div>
           </div>
-          
+
           <Card>
             <CardHeader>
               <CardTitle>Lista de Clientes</CardTitle>
@@ -397,7 +395,7 @@ export default function ClientsPage() {
               )}
             </CardContent>
           </Card>
-          
+
           {/* Client Rankings */}
           <Card className="mt-6">
             <CardHeader>
@@ -468,211 +466,211 @@ export default function ClientsPage() {
             </CardContent>
           </Card>
         </div>
+
+        {/* Client Details Dialog */}
+        {selectedClient && (
+          <Dialog open={clientDetailsOpen} onOpenChange={setClientDetailsOpen}>
+            <DialogContent className="sm:max-w-[700px]">
+              <DialogHeader>
+                <DialogTitle>Detalhes do Cliente</DialogTitle>
+              </DialogHeader>
+
+              <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6 pt-4">
+                <div className="flex flex-col items-center">
+                  <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center mb-4">
+                    <UserIcon className="h-16 w-16 text-muted-foreground" />
+                  </div>
+
+                  <h3 className="text-lg font-medium">{selectedClient.name}</h3>
+                  <p className="text-sm text-muted-foreground">{selectedClient.email}</p>
+
+                  <div className="w-full mt-6 space-y-2">
+                    {selectedClient.phone && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedClient.phone}</span>
+                      </div>
+                    )}
+
+                    {selectedClient.instagram && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Instagram className="h-4 w-4 text-muted-foreground" />
+                        <span>{selectedClient.instagram}</span>
+                      </div>
+                    )}
+
+                    {selectedClient.address && (
+                      <div className="flex items-start gap-2 text-sm">
+                        <div className="mt-0.5 shrink-0">
+                          <Search className="h-4 w-4 text-muted-foreground" />
+                        </div>
+                        <span>{selectedClient.address}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div>
+                  <Tabs defaultValue="history">
+                    <TabsList className="grid w-full grid-cols-3">
+                      <TabsTrigger value="history">Histórico</TabsTrigger>
+                      <TabsTrigger value="services">Serviços</TabsTrigger>
+                      <TabsTrigger value="stats">Estatísticas</TabsTrigger>
+                    </TabsList>
+
+                    <TabsContent value="history" className="pt-4">
+                      <h3 className="text-sm font-medium mb-2">Últimos Agendamentos</h3>
+                      <ScrollArea className="h-[300px]">
+                        {clientAppointments.length === 0 ? (
+                          <div className="text-center py-8 text-muted-foreground">
+                            Nenhum agendamento encontrado para este cliente.
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            {clientAppointments.map((appointment) => (
+                              <div key={appointment.id} className="border rounded-md p-3">
+                                <div className="flex justify-between items-start">
+                                  <div>
+                                    <div className="font-medium">{appointment.date}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                      {appointment.startTime} - {appointment.endTime}
+                                    </div>
+                                  </div>
+                                  <div className="text-right">
+                                    <div className="text-sm">Serviço ID: {appointment.serviceId}</div>
+                                    <div className="text-sm text-muted-foreground">
+                                      Profissional ID: {appointment.professionalId}
+                                    </div>
+                                  </div>
+                                </div>
+                                <div className="mt-2 flex items-center">
+                                  <div className={`text-xs px-2 py-1 rounded-full ${
+                                    appointment.status === "completed" 
+                                      ? "bg-green-100 text-green-800" 
+                                      : appointment.status === "cancelled" 
+                                        ? "bg-red-100 text-red-800"
+                                        : "bg-blue-100 text-blue-800"
+                                  }`}>
+                                    {appointment.status}
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        )}
+                      </ScrollArea>
+                    </TabsContent>
+
+                    <TabsContent value="services" className="pt-4">
+                      <h3 className="text-sm font-medium mb-2">Serviços Preferidos</h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center p-3 border rounded-md">
+                          <div className="flex items-center gap-2">
+                            <Scissors className="h-4 w-4 text-purple-600" />
+                            <span>Corte de Cabelo</span>
+                          </div>
+                          <div className="text-sm">10 agendamentos</div>
+                        </div>
+                        <div className="flex justify-between items-center p-3 border rounded-md">
+                          <div className="flex items-center gap-2">
+                            <Scissors className="h-4 w-4 text-purple-600" />
+                            <span>Coloração</span>
+                          </div>
+                          <div className="text-sm">5 agendamentos</div>
+                        </div>
+                        <div className="flex justify-between items-center p-3 border rounded-md">
+                          <div className="flex items-center gap-2">
+                            <Scissors className="h-4 w-4 text-purple-600" />
+                            <span>Manicure</span>
+                          </div>
+                          <div className="text-sm">3 agendamentos</div>
+                        </div>
+                      </div>
+
+                      <h3 className="text-sm font-medium mt-6 mb-2">Profissionais Preferidos</h3>
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center p-3 border rounded-md">
+                          <div className="flex items-center gap-2">
+                            <UserCheck className="h-4 w-4 text-purple-600" />
+                            <span>John Smith</span>
+                          </div>
+                          <div className="text-sm">7 agendamentos</div>
+                        </div>
+                        <div className="flex justify-between items-center p-3 border rounded-md">
+                          <div className="flex items-center gap-2">
+                            <UserCheck className="h-4 w-4 text-purple-600" />
+                            <span>Maria Silva</span>
+                          </div>
+                          <div className="text-sm">4 agendamentos</div>
+                        </div>
+                      </div>
+                    </TabsContent>
+
+                    <TabsContent value="stats" className="pt-4">
+                      <div className="grid grid-cols-2 gap-4">
+                        <Card>
+                          <CardHeader className="p-4">
+                            <CardTitle className="text-md">Total Gasto</CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-0">
+                            <div className="text-2xl font-bold">R$ 850,00</div>
+                            <p className="text-xs text-muted-foreground">
+                              Desde o primeiro agendamento
+                            </p>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardHeader className="p-4">
+                            <CardTitle className="text-md">Visitas</CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-0">
+                            <div className="text-2xl font-bold">18</div>
+                            <p className="text-xs text-muted-foreground">
+                              Total de agendamentos
+                            </p>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardHeader className="p-4">
+                            <CardTitle className="text-md">Média por Visita</CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-0">
+                            <div className="text-2xl font-bold">R$ 47,22</div>
+                            <p className="text-xs text-muted-foreground">
+                              Valor médio por agendamento
+                            </p>
+                          </CardContent>
+                        </Card>
+
+                        <Card>
+                          <CardHeader className="p-4">
+                            <CardTitle className="text-md">Última Visita</CardTitle>
+                          </CardHeader>
+                          <CardContent className="p-4 pt-0">
+                            <div className="text-lg font-bold">10/06/2023</div>
+                            <p className="text-xs text-muted-foreground">
+                              15 dias atrás
+                            </p>
+                          </CardContent>
+                        </Card>
+                      </div>
+                    </TabsContent>
+                  </Tabs>
+                </div>
+              </div>
+
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setClientDetailsOpen(false)}>
+                  Fechar
+                </Button>
+                <Button>Agendar Nova Visita</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
-      
-      {/* Client Details Dialog */}
-      {selectedClient && (
-        <Dialog open={clientDetailsOpen} onOpenChange={setClientDetailsOpen}>
-          <DialogContent className="sm:max-w-[700px]">
-            <DialogHeader>
-              <DialogTitle>Detalhes do Cliente</DialogTitle>
-            </DialogHeader>
-            
-            <div className="grid grid-cols-1 md:grid-cols-[200px_1fr] gap-6 pt-4">
-              <div className="flex flex-col items-center">
-                <div className="w-32 h-32 rounded-full bg-muted flex items-center justify-center mb-4">
-                  <UserIcon className="h-16 w-16 text-muted-foreground" />
-                </div>
-                
-                <h3 className="text-lg font-medium">{selectedClient.name}</h3>
-                <p className="text-sm text-muted-foreground">{selectedClient.email}</p>
-                
-                <div className="w-full mt-6 space-y-2">
-                  {selectedClient.phone && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Phone className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedClient.phone}</span>
-                    </div>
-                  )}
-                  
-                  {selectedClient.instagram && (
-                    <div className="flex items-center gap-2 text-sm">
-                      <Instagram className="h-4 w-4 text-muted-foreground" />
-                      <span>{selectedClient.instagram}</span>
-                    </div>
-                  )}
-                  
-                  {selectedClient.address && (
-                    <div className="flex items-start gap-2 text-sm">
-                      <div className="mt-0.5 shrink-0">
-                        <Search className="h-4 w-4 text-muted-foreground" />
-                      </div>
-                      <span>{selectedClient.address}</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-              
-              <div>
-                <Tabs defaultValue="history">
-                  <TabsList className="grid w-full grid-cols-3">
-                    <TabsTrigger value="history">Histórico</TabsTrigger>
-                    <TabsTrigger value="services">Serviços</TabsTrigger>
-                    <TabsTrigger value="stats">Estatísticas</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="history" className="pt-4">
-                    <h3 className="text-sm font-medium mb-2">Últimos Agendamentos</h3>
-                    <ScrollArea className="h-[300px]">
-                      {clientAppointments.length === 0 ? (
-                        <div className="text-center py-8 text-muted-foreground">
-                          Nenhum agendamento encontrado para este cliente.
-                        </div>
-                      ) : (
-                        <div className="space-y-4">
-                          {clientAppointments.map((appointment) => (
-                            <div key={appointment.id} className="border rounded-md p-3">
-                              <div className="flex justify-between items-start">
-                                <div>
-                                  <div className="font-medium">{appointment.date}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    {appointment.startTime} - {appointment.endTime}
-                                  </div>
-                                </div>
-                                <div className="text-right">
-                                  <div className="text-sm">Serviço ID: {appointment.serviceId}</div>
-                                  <div className="text-sm text-muted-foreground">
-                                    Profissional ID: {appointment.professionalId}
-                                  </div>
-                                </div>
-                              </div>
-                              <div className="mt-2 flex items-center">
-                                <div className={`text-xs px-2 py-1 rounded-full ${
-                                  appointment.status === "completed" 
-                                    ? "bg-green-100 text-green-800" 
-                                    : appointment.status === "cancelled" 
-                                      ? "bg-red-100 text-red-800"
-                                      : "bg-blue-100 text-blue-800"
-                                }`}>
-                                  {appointment.status}
-                                </div>
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                    </ScrollArea>
-                  </TabsContent>
-                  
-                  <TabsContent value="services" className="pt-4">
-                    <h3 className="text-sm font-medium mb-2">Serviços Preferidos</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 border rounded-md">
-                        <div className="flex items-center gap-2">
-                          <Scissors className="h-4 w-4 text-purple-600" />
-                          <span>Corte de Cabelo</span>
-                        </div>
-                        <div className="text-sm">10 agendamentos</div>
-                      </div>
-                      <div className="flex justify-between items-center p-3 border rounded-md">
-                        <div className="flex items-center gap-2">
-                          <Scissors className="h-4 w-4 text-purple-600" />
-                          <span>Coloração</span>
-                        </div>
-                        <div className="text-sm">5 agendamentos</div>
-                      </div>
-                      <div className="flex justify-between items-center p-3 border rounded-md">
-                        <div className="flex items-center gap-2">
-                          <Scissors className="h-4 w-4 text-purple-600" />
-                          <span>Manicure</span>
-                        </div>
-                        <div className="text-sm">3 agendamentos</div>
-                      </div>
-                    </div>
-                    
-                    <h3 className="text-sm font-medium mt-6 mb-2">Profissionais Preferidos</h3>
-                    <div className="space-y-3">
-                      <div className="flex justify-between items-center p-3 border rounded-md">
-                        <div className="flex items-center gap-2">
-                          <UserCheck className="h-4 w-4 text-purple-600" />
-                          <span>John Smith</span>
-                        </div>
-                        <div className="text-sm">7 agendamentos</div>
-                      </div>
-                      <div className="flex justify-between items-center p-3 border rounded-md">
-                        <div className="flex items-center gap-2">
-                          <UserCheck className="h-4 w-4 text-purple-600" />
-                          <span>Maria Silva</span>
-                        </div>
-                        <div className="text-sm">4 agendamentos</div>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="stats" className="pt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <Card>
-                        <CardHeader className="p-4">
-                          <CardTitle className="text-md">Total Gasto</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0">
-                          <div className="text-2xl font-bold">R$ 850,00</div>
-                          <p className="text-xs text-muted-foreground">
-                            Desde o primeiro agendamento
-                          </p>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card>
-                        <CardHeader className="p-4">
-                          <CardTitle className="text-md">Visitas</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0">
-                          <div className="text-2xl font-bold">18</div>
-                          <p className="text-xs text-muted-foreground">
-                            Total de agendamentos
-                          </p>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card>
-                        <CardHeader className="p-4">
-                          <CardTitle className="text-md">Média por Visita</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0">
-                          <div className="text-2xl font-bold">R$ 47,22</div>
-                          <p className="text-xs text-muted-foreground">
-                            Valor médio por agendamento
-                          </p>
-                        </CardContent>
-                      </Card>
-                      
-                      <Card>
-                        <CardHeader className="p-4">
-                          <CardTitle className="text-md">Última Visita</CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-4 pt-0">
-                          <div className="text-lg font-bold">10/06/2023</div>
-                          <p className="text-xs text-muted-foreground">
-                            15 dias atrás
-                          </p>
-                        </CardContent>
-                      </Card>
-                    </div>
-                  </TabsContent>
-                </Tabs>
-              </div>
-            </div>
-            
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setClientDetailsOpen(false)}>
-                Fechar
-              </Button>
-              <Button>Agendar Nova Visita</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      )}
-    </div>
+    </Sidebar>
   );
 }
