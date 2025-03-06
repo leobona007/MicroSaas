@@ -31,6 +31,7 @@ export function Sidebar({ className, children }: SidebarProps) {
   const { logoutMutation } = useAuth();
   const isMobile = useMobile();
   const [open, setOpen] = useState(!isMobile);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   useEffect(() => {
     // Update sidebar state when screen size changes
@@ -83,7 +84,7 @@ export function Sidebar({ className, children }: SidebarProps) {
   if (isMobile) {
     return (
       <div className="flex min-h-screen bg-background">
-        <Sheet>
+        <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
           <SheetTrigger asChild>
             <Button 
               variant="outline" 
@@ -115,6 +116,7 @@ export function Sidebar({ className, children }: SidebarProps) {
                             ? "bg-sidebar-accent text-sidebar-accent-foreground"
                             : "text-sidebar-foreground hover:bg-sidebar-accent/50"
                         )}
+                        onClick={() => setMobileOpen(false)}
                       >
                         {item.icon}
                         {item.label}

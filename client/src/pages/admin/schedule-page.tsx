@@ -285,11 +285,9 @@ export default function SchedulePage() {
   };
 
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-
-      <div className="flex-1 flex flex-col ml-64">
-        <div className="p-8">
+    <Sidebar>
+      <div className="flex flex-col">
+        <div className="mb-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold tracking-tight">Agenda</h1>
 
@@ -680,6 +678,6 @@ export default function SchedulePage() {
           </div>
         </div>
       </div>
-    </div>
+    </Sidebar>
   );
 }
