@@ -174,8 +174,8 @@ export default function ClientsPage() {
 
   return (
     <Sidebar>
-      <div className="flex-1 flex flex-col"> {/* Removed ml-64 */}
-        <div className="p-8">
+      <div className="flex flex-col">
+        <div className="mb-6">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold tracking-tight">Clientes</h1>
 

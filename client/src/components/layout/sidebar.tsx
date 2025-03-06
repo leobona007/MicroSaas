@@ -149,27 +149,18 @@ export function Sidebar({ className, children }: SidebarProps) {
     );
   }
 
-  // For desktop: use traditional sidebar with toggle
   return (
-    <div className="flex min-h-screen bg-background">
-      <Button 
-        variant="outline" 
-        size="icon"
-        onClick={() => setOpen(!open)}
-        className="fixed top-4 left-4 z-50 lg:hidden"
-      >
-        {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
-      </Button>
-
+    <div className="flex h-screen overflow-hidden bg-background">
+      {/* Desktop sidebar */}
       <aside 
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
-          open ? "w-64" : "w-0 -translate-x-full lg:translate-x-0 lg:w-16",
+          "fixed left-0 top-0 z-40 h-full w-64 bg-sidebar border-r border-sidebar-border transition-all duration-300",
+          open ? "translate-x-0" : "-translate-x-full lg:translate-x-0 lg:w-16",
           className
         )}
       >
-        <div className="flex flex-col h-full">
-          <div className="flex items-center justify-center h-16 border-b border-sidebar-border overflow-hidden">
+        <div className="flex h-full flex-col">
+          <div className="flex h-16 items-center justify-center border-b border-sidebar-border overflow-hidden">
             <Link href="/admin">
               <div className="flex items-center space-x-2">
                 <Scissors className="h-6 w-6 text-purple-600" />
@@ -223,16 +214,26 @@ export function Sidebar({ className, children }: SidebarProps) {
         </div>
       </aside>
 
-      {/* Main content that adjusts based on sidebar state */}
-      <div 
+      {/* Toggle button for the sidebar - fixed position */}
+      <Button 
+        variant="outline" 
+        size="icon"
+        onClick={() => setOpen(!open)}
+        className="fixed top-4 left-4 z-50 lg:hidden"
+      >
+        {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+      </Button>
+
+      {/* Main content area that adjusts based on sidebar state */}
+      <main 
         className={cn(
-          "flex-1 transition-all duration-300", 
-          open ? "md:ml-64" : "md:ml-16",
-          "ml-0 p-4 sm:p-6 lg:p-8" // Add padding to all sides
+          "flex-1 overflow-auto transition-all duration-300", 
+          open ? "lg:ml-64" : "lg:ml-16",
+          "ml-0 p-4 sm:p-6 lg:p-8 pt-14 lg:pt-8" // Adjust top padding for mobile toggle button
         )}
       >
         {children}
-      </div>
+      </main>
     </div>
   );
 }
