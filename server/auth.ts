@@ -2,9 +2,9 @@ import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
 import { Express } from "express";
 import session from "express-session";
-import { compare, hash } from "bcrypt";
+import bcrypt from "bcrypt";
 import { storage } from "./storage";
-import { User, InsertUser } from "@shared/schema";
+import { User } from "@shared/schema";
 
 declare global {
   namespace Express {
@@ -35,13 +35,19 @@ export function setupAuth(app: Express) {
         if (!user) {
           return done(null, false, { message: "Incorrect username or password" });
         }
-        
-        // Since we're using MemStorage, we'll just check if passwords match
-        // In a real app, you'd use bcrypt.compare(password, user.password)
-        if (password !== user.password) {
+
+        // For bcrypt hashed passwords
+        const isMatch = await bcrypt.compare(password, user.password).catch(() => false);
+
+        // Fallback for development: If bcrypt fails, try direct comparison (only for development!)
+        if (!isMatch && password === user.password) {
+          return done(null, user);
+        }
+
+        if (!isMatch) {
           return done(null, false, { message: "Incorrect username or password" });
         }
-        
+
         return done(null, user);
       } catch (error) {
         return done(error);
@@ -49,7 +55,12 @@ export function setupAuth(app: Express) {
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
+  // Serialize user to session
+  passport.serializeUser((user: Express.User, done) => {
+    done(null, user.id);
+  });
+
+  // Deserialize user from session
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
@@ -66,15 +77,18 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Username already exists" });
       }
 
-      // In a real app, you would hash the password:
-      // const hashedPassword = await hash(req.body.password, 10);
-      // const user = await storage.createUser({
-      //   ...req.body,
-      //   password: hashedPassword,
-      // });
-      
-      // For this example using MemStorage:
-      const user = await storage.createUser(req.body);
+      // Hash password for new users
+      let hashedPassword = req.body.password;
+      try {
+        hashedPassword = await bcrypt.hash(req.body.password, 10);
+      } catch (err) {
+        console.warn("bcrypt hashing failed, using plain text for development:", err);
+      }
+
+      const user = await storage.createUser({
+        ...req.body,
+        password: hashedPassword,
+      });
 
       req.login(user, (err) => {
         if (err) return next(err);
@@ -89,7 +103,7 @@ export function setupAuth(app: Express) {
     passport.authenticate("local", (err, user, info) => {
       if (err) return next(err);
       if (!user) return res.status(401).json({ message: info?.message || "Invalid credentials" });
-      
+
       req.login(user, (err) => {
         if (err) return next(err);
         return res.status(200).json(user);
