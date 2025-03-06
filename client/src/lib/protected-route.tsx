@@ -1,43 +1,36 @@
 import { useAuth } from "@/hooks/use-auth";
-import { Loader2 } from "lucide-react";
-import { Redirect, Route } from "wouter";
+import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
-export function ProtectedRoute({
-  path,
-  component: Component,
-}: {
-  path: string;
-  component: () => React.JSX.Element;
-}) {
+export function ProtectedRoute({ component: Component, path, ...rest }) {
   const { user, isLoading } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (!isLoading) {
+      if (!user) {
+        navigate("/auth");
+      } else {
+        // Verificar se o usuário está acessando a página correta baseado em seu papel
+        const isAdminRoute = path?.startsWith("/admin");
+        const isClientRoute = path === "/booking";
+
+        if (user.role === "client" && isAdminRoute) {
+          navigate("/booking");
+        } else if (user.role === "admin" && isClientRoute) {
+          navigate("/admin");
+        }
+      }
+    }
+  }, [user, isLoading, navigate, path]);
 
   if (isLoading) {
-    return (
-      <Route path={path}>
-        <div className="flex items-center justify-center min-h-screen">
-          <Loader2 className="h-8 w-8 animate-spin text-border" />
-        </div>
-      </Route>
-    );
+    return <div>Carregando...</div>;
   }
 
-  // If not logged in, redirect to auth page
   if (!user) {
-    return (
-      <Route path={path}>
-        <Redirect to="/auth" />
-      </Route>
-    );
+    return null; // Will redirect in useEffect
   }
 
-  // If path starts with /admin and user is not admin, redirect to home
-  if (path.startsWith("/admin") && user.role !== "admin") {
-    return (
-      <Route path={path}>
-        <Redirect to="/" />
-      </Route>
-    );
-  }
-
-  return <Route path={path} component={Component} />;
+  return <Component {...rest} />;
 }

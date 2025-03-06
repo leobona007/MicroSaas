@@ -23,7 +23,7 @@ export const AuthContext = createContext<AuthContextType | null>(null);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [_, setLocation] = useLocation();
-  
+
   const {
     data: user,
     error,
@@ -44,10 +44,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         title: "Login bem-sucedido",
         description: `Bem-vindo, ${user.name}!`,
       });
-      
+
       // Redirect based on role
       if (user.role === "admin") {
         setLocation("/admin");
+      } else if (user.role === "client") {
+        setLocation("/booking");
       } else {
         setLocation("/");
       }

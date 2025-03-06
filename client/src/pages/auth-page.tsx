@@ -66,6 +66,8 @@ export default function AuthPage() {
     if (user) {
       if (user.role === "admin") {
         navigate("/admin");
+      } else if (user.role === "client") {
+        navigate("/booking");
       } else {
         navigate("/");
       }
