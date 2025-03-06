@@ -223,154 +223,315 @@ export default function BookingPage() {
           </p>
         </div>
 
-        <div className="grid gap-4 sm:gap-6 md:gap-8 grid-cols-1 md:grid-cols-12">
-          {/* Service selection */}
-          <Card className="md:col-span-4">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                <Scissors className="h-5 w-5 text-purple-600" />
-                Serviço
-              </CardTitle>
-              <CardDescription>Selecione o serviço desejado</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <RadioGroup value={selectedService?.toString()} onValueChange={(value) => setSelectedService(parseInt(value))}>
-                <div className="space-y-3 sm:space-y-4">
-                  {services.map((service) => (
-                    <div key={service.id} className="flex items-start space-x-3 space-y-0">
-                      <RadioGroupItem value={service.id.toString()} id={`service-${service.id}`} />
-                      <div className="flex flex-col">
-                        <Label htmlFor={`service-${service.id}`} className="font-medium cursor-pointer">
-                          {service.name}
-                        </Label>
-                        {service.description && (
-                          <span className="text-sm text-muted-foreground">{service.description}</span>
-                        )}
-                        <div className="flex items-center gap-4 mt-1 text-sm">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3" /> {service.duration} min
-                          </span>
-                          <span className="font-medium">R$ {service.price.toFixed(2)}</span>
-                        </div>
+        {/* Em dispositivos móveis, use Tabs para navegação entre as etapas */}
+        {isMobile ? (
+          <div className="mb-6">
+            <Tabs defaultValue="service" className="w-full">
+              <TabsList className="grid grid-cols-3 mb-4">
+                <TabsTrigger value="service">Serviço</TabsTrigger>
+                <TabsTrigger value="datetime">Data/Hora</TabsTrigger>
+                <TabsTrigger value="professional">Profissional</TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="service">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <Scissors className="h-5 w-5 text-purple-600" />
+                      Escolha o Serviço
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <RadioGroup value={selectedService?.toString()} onValueChange={(value) => setSelectedService(parseInt(value))}>
+                      <div className="space-y-3">
+                        {services.map((service) => (
+                          <div key={service.id} className="flex items-start space-x-3 space-y-0">
+                            <RadioGroupItem value={service.id.toString()} id={`service-${service.id}`} />
+                            <div className="flex flex-col">
+                              <Label htmlFor={`service-${service.id}`} className="font-medium cursor-pointer">
+                                {service.name}
+                              </Label>
+                              {service.description && (
+                                <span className="text-sm text-muted-foreground">{service.description}</span>
+                              )}
+                              <div className="flex items-center gap-4 mt-1 text-sm">
+                                <span className="flex items-center gap-1">
+                                  <Clock className="h-3 w-3" /> {service.duration} min
+                                </span>
+                                <span className="font-medium">R$ {service.price.toFixed(2)}</span>
+                              </div>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </RadioGroup>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+
+              <TabsContent value="datetime">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <CalendarIcon className="h-5 w-5 text-purple-600" />
+                      Escolha Data e Hora
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent className="flex flex-col space-y-4">
+                    <div>
+                      <div className="grid gap-2">
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant={"outline"}
+                              className={cn(
+                                "w-full justify-start text-left font-normal",
+                                !date && "text-muted-foreground"
+                              )}
+                            >
+                              <CalendarIcon className="mr-2 h-4 w-4" />
+                              {date ? format(date, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={date}
+                              onSelect={setDate}
+                              initialFocus
+                              disabled={(date) => {
+                                // Disable past dates
+                                const today = new Date();
+                                today.setHours(0, 0, 0, 0);
+                                return date < today;
+                              }}
+                            />
+                          </PopoverContent>
+                        </Popover>
                       </div>
                     </div>
-                  ))}
-                </div>
-              </RadioGroup>
-            </CardContent>
-          </Card>
 
-          {/* Date and time selection */}
-          <Card className="md:col-span-4">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                <CalendarIcon className="h-5 w-5 text-purple-600" />
-                Data e Horário
-              </CardTitle>
-              <CardDescription>Escolha a data e horário disponível</CardDescription>
-            </CardHeader>
-            <CardContent className="flex flex-col space-y-4">
-              <div>
-                <div className="grid gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !date && "text-muted-foreground"
+                    {date && selectedService && selectedProfessional && (
+                      <div className="space-y-2">
+                        <h3 className="font-medium text-sm">Horários Disponíveis</h3>
+                        {isAppointmentsLoading ? (
+                          <p className="text-sm text-muted-foreground">Carregando horários...</p>
+                        ) : availableTimeSlots.length > 0 ? (
+                          <div className="grid grid-cols-3 gap-2">
+                            {availableTimeSlots.map((timeSlot) => (
+                              <Button
+                                key={timeSlot}
+                                variant={selectedTimeSlot === timeSlot ? "default" : "outline"}
+                                className={cn(
+                                  "text-center",
+                                  selectedTimeSlot === timeSlot && "bg-purple-700 hover:bg-purple-800"
+                                )}
+                                onClick={() => setSelectedTimeSlot(timeSlot)}
+                                size="sm"
+                              >
+                                {timeSlot}
+                              </Button>
+                            ))}
+                          </div>
+                        ) : (
+                          <p className="text-sm text-muted-foreground">
+                            Não há horários disponíveis para esta data
+                          </p>
                         )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {date ? format(date, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={date}
-                        onSelect={setDate}
-                        initialFocus
-                        disabled={(date) => {
-                          // Disable past dates
-                          const today = new Date();
-                          today.setHours(0, 0, 0, 0);
-                          return date < today;
-                        }}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
+                      </div>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
 
-              {date && selectedService && selectedProfessional && (
-                <div className="space-y-2">
-                  <h3 className="font-medium text-sm">Horários Disponíveis</h3>
-                  {isAppointmentsLoading ? (
-                    <p className="text-sm text-muted-foreground">Carregando horários...</p>
-                  ) : availableTimeSlots.length > 0 ? (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                      {availableTimeSlots.map((timeSlot) => (
-                        <Button
-                          key={timeSlot}
-                          variant={selectedTimeSlot === timeSlot ? "default" : "outline"}
-                          className={cn(
-                            "text-center",
-                            selectedTimeSlot === timeSlot && "bg-purple-700 hover:bg-purple-800"
-                          )}
-                          onClick={() => setSelectedTimeSlot(timeSlot)}
-                          size={isMobile ? "sm" : "default"}
-                        >
-                          {timeSlot}
-                        </Button>
-                      ))}
-                    </div>
-                  ) : (
-                    <p className="text-sm text-muted-foreground">
-                      Não há horários disponíveis para esta data
-                    </p>
-                  )}
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Professional selection */}
-          <Card className="md:col-span-4">
-            <CardHeader className="pb-3">
-              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
-                <User className="h-5 w-5 text-purple-600" />
-                Profissional
-              </CardTitle>
-              <CardDescription>Escolha o profissional para o atendimento</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {!selectedService ? (
-                <p className="text-sm text-muted-foreground">Selecione um serviço primeiro</p>
-              ) : isProfessionalsLoading ? (
-                <p className="text-sm text-muted-foreground">Carregando profissionais...</p>
-              ) : professionals.length === 0 ? (
-                <p className="text-sm text-muted-foreground">Nenhum profissional disponível para este serviço</p>
-              ) : (
-                <RadioGroup value={selectedProfessional?.toString()} onValueChange={(value) => setSelectedProfessional(parseInt(value))}>
+              <TabsContent value="professional">
+                <Card>
+                  <CardHeader className="pb-3">
+                    <CardTitle className="flex items-center gap-2 text-lg">
+                      <User className="h-5 w-5 text-purple-600" />
+                      Escolha o Profissional
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {!selectedService ? (
+                      <p className="text-sm text-muted-foreground">Selecione um serviço primeiro</p>
+                    ) : isProfessionalsLoading ? (
+                      <p className="text-sm text-muted-foreground">Carregando profissionais...</p>
+                    ) : professionals.length === 0 ? (
+                      <p className="text-sm text-muted-foreground">Nenhum profissional disponível para este serviço</p>
+                    ) : (
+                      <RadioGroup value={selectedProfessional?.toString()} onValueChange={(value) => setSelectedProfessional(parseInt(value))}>
+                        <div className="space-y-3">
+                          {professionals.map((professional) => (
+                            <div key={professional.id} className="flex items-start space-x-3 space-y-0">
+                              <RadioGroupItem value={professional.id.toString()} id={`professional-${professional.id}`} />
+                              <div className="flex flex-col">
+                                <Label htmlFor={`professional-${professional.id}`} className="font-medium cursor-pointer">
+                                  {professional.name}
+                                </Label>
+                                <span className="text-sm text-muted-foreground">{professional.email}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </RadioGroup>
+                    )}
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
+          </div>
+        ) : (
+          // Em desktop, mantenha o layout em grid
+          <div className="grid gap-4 sm:gap-6 md:gap-8 grid-cols-1 md:grid-cols-12">
+            {/* Service selection */}
+            <Card className="md:col-span-4">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <Scissors className="h-5 w-5 text-purple-600" />
+                  Serviço
+                </CardTitle>
+                <CardDescription>Selecione o serviço desejado</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <RadioGroup value={selectedService?.toString()} onValueChange={(value) => setSelectedService(parseInt(value))}>
                   <div className="space-y-3 sm:space-y-4">
-                    {professionals.map((professional) => (
-                      <div key={professional.id} className="flex items-start space-x-3 space-y-0">
-                        <RadioGroupItem value={professional.id.toString()} id={`professional-${professional.id}`} />
+                    {services.map((service) => (
+                      <div key={service.id} className="flex items-start space-x-3 space-y-0">
+                        <RadioGroupItem value={service.id.toString()} id={`service-${service.id}`} />
                         <div className="flex flex-col">
-                          <Label htmlFor={`professional-${professional.id}`} className="font-medium cursor-pointer">
-                            {professional.name}
+                          <Label htmlFor={`service-${service.id}`} className="font-medium cursor-pointer">
+                            {service.name}
                           </Label>
-                          <span className="text-sm text-muted-foreground">{professional.email}</span>
+                          {service.description && (
+                            <span className="text-sm text-muted-foreground">{service.description}</span>
+                          )}
+                          <div className="flex items-center gap-4 mt-1 text-sm">
+                            <span className="flex items-center gap-1">
+                              <Clock className="h-3 w-3" /> {service.duration} min
+                            </span>
+                            <span className="font-medium">R$ {service.price.toFixed(2)}</span>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 </RadioGroup>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+
+            {/* Date and time selection */}
+            <Card className="md:col-span-4">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <CalendarIcon className="h-5 w-5 text-purple-600" />
+                  Data e Horário
+                </CardTitle>
+                <CardDescription>Escolha a data e horário disponível</CardDescription>
+              </CardHeader>
+              <CardContent className="flex flex-col space-y-4">
+                <div>
+                  <div className="grid gap-2">
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {date ? format(date, "PPP", { locale: ptBR }) : <span>Selecione a data</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={date}
+                          onSelect={setDate}
+                          initialFocus
+                          disabled={(date) => {
+                            // Disable past dates
+                            const today = new Date();
+                            today.setHours(0, 0, 0, 0);
+                            return date < today;
+                          }}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </div>
+
+                {date && selectedService && selectedProfessional && (
+                  <div className="space-y-2">
+                    <h3 className="font-medium text-sm">Horários Disponíveis</h3>
+                    {isAppointmentsLoading ? (
+                      <p className="text-sm text-muted-foreground">Carregando horários...</p>
+                    ) : availableTimeSlots.length > 0 ? (
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                        {availableTimeSlots.map((timeSlot) => (
+                          <Button
+                            key={timeSlot}
+                            variant={selectedTimeSlot === timeSlot ? "default" : "outline"}
+                            className={cn(
+                              "text-center",
+                              selectedTimeSlot === timeSlot && "bg-purple-700 hover:bg-purple-800"
+                            )}
+                            onClick={() => setSelectedTimeSlot(timeSlot)}
+                            size={isMobile ? "sm" : "default"}
+                          >
+                            {timeSlot}
+                          </Button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Não há horários disponíveis para esta data
+                      </p>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Professional selection */}
+            <Card className="md:col-span-4">
+              <CardHeader className="pb-3">
+                <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                  <User className="h-5 w-5 text-purple-600" />
+                  Profissional
+                </CardTitle>
+                <CardDescription>Escolha o profissional para o atendimento</CardDescription>
+              </CardHeader>
+              <CardContent>
+                {!selectedService ? (
+                  <p className="text-sm text-muted-foreground">Selecione um serviço primeiro</p>
+                ) : isProfessionalsLoading ? (
+                  <p className="text-sm text-muted-foreground">Carregando profissionais...</p>
+                ) : professionals.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">Nenhum profissional disponível para este serviço</p>
+                ) : (
+                  <RadioGroup value={selectedProfessional?.toString()} onValueChange={(value) => setSelectedProfessional(parseInt(value))}>
+                    <div className="space-y-3 sm:space-y-4">
+                      {professionals.map((professional) => (
+                        <div key={professional.id} className="flex items-start space-x-3 space-y-0">
+                          <RadioGroupItem value={professional.id.toString()} id={`professional-${professional.id}`} />
+                          <div className="flex flex-col">
+                            <Label htmlFor={`professional-${professional.id}`} className="font-medium cursor-pointer">
+                              {professional.name}
+                            </Label>
+                            <span className="text-sm text-muted-foreground">{professional.email}</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </RadioGroup>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         {/* Booking summary and submit button */}
         <Card className="mt-6 sm:mt-8">

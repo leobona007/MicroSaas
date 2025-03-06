@@ -18,6 +18,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useMobile } from "@/hooks/use-mobile";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import React from 'react';
 
 interface SidebarProps {
   className?: string;
@@ -27,19 +29,12 @@ export function Sidebar({ className }: SidebarProps) {
   const [location] = useLocation();
   const { logoutMutation } = useAuth();
   const isMobile = useMobile();
-  const [isOpen, setIsOpen] = useState(!isMobile);
+  const [open, setOpen] = useState(!isMobile);
 
   useEffect(() => {
-    if (isMobile) {
-      setIsOpen(false);
-    } else {
-      setIsOpen(true);
-    }
+    // Update sidebar state when screen size changes
+    setOpen(!isMobile);
   }, [isMobile]);
-
-  const toggleSidebar = () => {
-    setIsOpen(prev => !prev);
-  };
 
   const sidebarItems = [
     {
@@ -83,37 +78,103 @@ export function Sidebar({ className }: SidebarProps) {
     logoutMutation.mutate();
   };
 
+  // For mobile: use Sheet component from shadcn UI for a slide-in sidebar
+  if (isMobile) {
+    return (
+      <>
+        <Sheet>
+          <SheetTrigger asChild>
+            <Button 
+              variant="outline" 
+              size="icon" 
+              className="fixed top-4 left-4 z-50 h-8 w-8"
+            >
+              <Menu className="h-4 w-4" />
+            </Button>
+          </SheetTrigger>
+          <SheetContent side="left" className="w-[240px] p-0">
+            <div className="flex flex-col h-full">
+              <div className="flex items-center justify-center h-14 border-b border-sidebar-border">
+                <Link href="/admin">
+                  <div className="flex items-center space-x-2">
+                    <Scissors className="h-5 w-5 text-purple-600" />
+                    <span className="text-base font-semibold">Salão Admin</span>
+                  </div>
+                </Link>
+              </div>
+
+              <ScrollArea className="flex-1 py-2">
+                <nav className="px-2 space-y-1">
+                  {sidebarItems.map((item) => (
+                    <Link key={item.href} href={item.href}>
+                      <a
+                        className={cn(
+                          "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
+                          location === item.href
+                            ? "bg-sidebar-accent text-sidebar-accent-foreground"
+                            : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        )}
+                      >
+                        {item.icon}
+                        {item.label}
+                      </a>
+                    </Link>
+                  ))}
+                </nav>
+              </ScrollArea>
+
+              <div className="p-3 border-t border-sidebar-border flex justify-between items-center">
+                <ThemeToggle />
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={handleLogout} 
+                  disabled={logoutMutation.isPending}
+                  className="flex items-center"
+                >
+                  <LogOut className="h-4 w-4 mr-2" />
+                  {logoutMutation.isPending ? "Saindo..." : "Sair"}
+                </Button>
+              </div>
+            </div>
+          </SheetContent>
+        </Sheet>
+
+        {/* Add padding to the content area for the fixed toggle button */}
+        <div className="w-0"></div>
+      </>
+    );
+  }
+
+  // For desktop: use traditional sidebar with toggle
   return (
     <>
-      {isMobile && (
-        <Button 
-          variant="outline" 
-          size="icon" 
-          className="fixed top-4 left-4 z-50"
-          onClick={toggleSidebar}
-        >
-          {isOpen ? <X /> : <Menu />}
-        </Button>
-      )}
-      
+      <Button 
+        variant="outline" 
+        size="icon"
+        onClick={() => setOpen(!open)}
+        className="fixed top-4 left-4 z-50 lg:hidden"
+      >
+        {open ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+      </Button>
+
       <aside 
         className={cn(
-          "fixed top-0 left-0 z-40 h-screen bg-sidebar border-r border-sidebar-border transition-all",
-          isOpen ? "w-64" : "w-0",
-          isMobile ? "shadow-lg" : "",
+          "fixed top-0 left-0 z-40 h-screen bg-sidebar border-r border-sidebar-border transition-all duration-300",
+          open ? "w-64" : "w-0 -translate-x-full lg:translate-x-0 lg:w-16",
           className
         )}
       >
         <div className="flex flex-col h-full">
-          <div className="flex items-center justify-center h-16 border-b border-sidebar-border">
+          <div className="flex items-center justify-center h-16 border-b border-sidebar-border overflow-hidden">
             <Link href="/admin">
               <div className="flex items-center space-x-2">
                 <Scissors className="h-6 w-6 text-purple-600" />
-                <span className="text-xl font-semibold text-sidebar-foreground">Salão Admin</span>
+                {open && <span className="text-xl font-semibold text-sidebar-foreground">Salão Admin</span>}
               </div>
             </Link>
           </div>
-          
+
           <ScrollArea className="flex-1 py-4">
             <nav className="px-3 space-y-1">
               {sidebarItems.map((item) => (
@@ -123,32 +184,48 @@ export function Sidebar({ className }: SidebarProps) {
                       "flex items-center px-3 py-2 rounded-md text-sm font-medium transition-colors",
                       location === item.href
                         ? "bg-sidebar-accent text-sidebar-accent-foreground"
-                        : "text-sidebar-foreground hover:bg-sidebar-accent/50"
+                        : "text-sidebar-foreground hover:bg-sidebar-accent/50",
+                      !open && "justify-center px-0"
                     )}
+                    title={!open ? item.label : undefined}
                   >
-                    {item.icon}
-                    {item.label}
+                    {item.icon.props.className ? 
+                      React.cloneElement(item.icon, { className: open ? item.icon.props.className : "mr-0 h-5 w-5" }) 
+                      : item.icon}
+                    {open && item.label}
                   </a>
                 </Link>
               ))}
             </nav>
           </ScrollArea>
-          
-          <div className="p-4 border-t border-sidebar-border flex justify-between items-center">
+
+          <div className={cn(
+            "p-4 border-t border-sidebar-border", 
+            open ? "flex justify-between items-center" : "flex flex-col items-center gap-4"
+          )}>
             <ThemeToggle />
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={handleLogout} 
-              disabled={logoutMutation.isPending}
-              className="flex items-center"
-            >
-              <LogOut className="h-4 w-4 mr-2" />
-              {logoutMutation.isPending ? "Saindo..." : "Sair"}
-            </Button>
+            {open && (
+              <Button 
+                variant="ghost" 
+                size="sm" 
+                onClick={handleLogout} 
+                disabled={logoutMutation.isPending}
+                className="flex items-center"
+              >
+                <LogOut className="h-4 w-4 mr-2" />
+                {logoutMutation.isPending ? "Saindo..." : "Sair"}
+              </Button>
+            )}
           </div>
         </div>
       </aside>
+
+      {/* Adjustable margin for content */}
+      <div className={cn(
+        "transition-all duration-300",
+        open ? "lg:ml-64" : "lg:ml-16",
+        "ml-0" // No margin on mobile since we're using Sheet
+      )}></div>
     </>
   );
 }

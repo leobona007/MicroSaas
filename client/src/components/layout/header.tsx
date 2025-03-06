@@ -1,9 +1,11 @@
 import { ThemeToggle } from "@/components/ui/theme-toggle";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
-import { LogOut, Scissors, User } from "lucide-react";
+import { LogOut, Scissors, User, Menu } from "lucide-react";
 import { Link } from "wouter";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useMobile } from "@/hooks/use-mobile";
+import { useState } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,34 +17,48 @@ import {
 
 export function Header() {
   const { user, logoutMutation } = useAuth();
+  const isMobile = useMobile();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const handleLogout = () => {
     logoutMutation.mutate();
   };
 
   return (
-    <header className="sticky top-0 z-30 w-full border-b bg-background">
-      <div className="container flex h-16 items-center justify-between py-4">
+    <header className="sticky top-0 z-30 w-full border-b bg-background shadow-sm">
+      <div className="px-4 sm:px-6 md:px-8 mx-auto flex h-14 sm:h-16 items-center justify-between">
         <Link href="/">
           <div className="flex items-center gap-2 cursor-pointer">
-            <Scissors className="h-6 w-6 text-purple-600" />
-            <span className="text-xl font-semibold">Salão de Beleza</span>
+            <Scissors className="h-5 w-5 sm:h-6 sm:w-6 text-purple-600" />
+            <span className="text-base sm:text-xl font-semibold truncate">Salão de Beleza</span>
           </div>
         </Link>
 
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4">
+          {isMobile && !user && (
+            <Button variant="outline" size="sm" asChild>
+              <Link href="/auth">Entrar</Link>
+            </Button>
+          )}
+
+          {!isMobile && !user && (
+            <Button variant="default" className="bg-purple-700 hover:bg-purple-800" asChild>
+              <Link href="/auth">Entrar / Cadastrar</Link>
+            </Button>
+          )}
+
           <ThemeToggle />
-          
+
           {user && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="relative h-9 w-9 rounded-full">
-                  <Avatar>
+                <Button variant="ghost" className="relative h-8 w-8 sm:h-9 sm:w-9 rounded-full">
+                  <Avatar className="h-8 w-8 sm:h-9 sm:w-9">
                     {user.profilePicture ? (
                       <AvatarImage src={user.profilePicture} alt={user.name} />
                     ) : (
                       <AvatarFallback>
-                        <User className="h-4 w-4" />
+                        <User className="h-3 w-3 sm:h-4 sm:w-4" />
                       </AvatarFallback>
                     )}
                   </Avatar>
@@ -51,7 +67,7 @@ export function Header() {
               <DropdownMenuContent className="w-56" align="end" forceMount>
                 <DropdownMenuLabel>
                   <div className="flex flex-col space-y-1">
-                    <p className="text-sm font-medium leading-none">{user.name}</p>
+                    <p className="text-sm font-medium leading-none">{user.name || user.username}</p>
                     <p className="text-xs leading-none text-muted-foreground">
                       {user.email}
                     </p>
