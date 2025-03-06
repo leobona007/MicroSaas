@@ -1,10 +1,11 @@
+
 import { useAuth } from "@/hooks/use-auth";
-import { useNavigate } from "react-router-dom";
+import { useLocation } from "wouter";
 import { useEffect } from "react";
 
 export function ProtectedRoute({ component: Component, path, ...rest }) {
   const { user, isLoading } = useAuth();
-  const navigate = useNavigate();
+  const [_, navigate] = useLocation();
 
   useEffect(() => {
     if (!isLoading) {
@@ -32,5 +33,5 @@ export function ProtectedRoute({ component: Component, path, ...rest }) {
     return null; // Will redirect in useEffect
   }
 
-  return <Component {...rest} />;
+  return <Component {...rest} />
 }
