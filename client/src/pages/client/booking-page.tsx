@@ -1,3 +1,4 @@
+// Melhorias na responsividade do layout
 import { useState, useEffect } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { format, parse, addDays } from "date-fns";
@@ -6,6 +7,7 @@ import { Calendar as CalendarIcon, Clock, User, Scissors, MapPin } from "lucide-
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
+import { useMobile } from "@/hooks/use-mobile";
 import {
   Popover,
   PopoverContent,
@@ -40,6 +42,7 @@ import { Label } from "@/components/ui/label";
 export default function BookingPage() {
   const { user } = useAuth();
   const { toast } = useToast();
+  const isMobile = useMobile();
   const [date, setDate] = useState<Date | undefined>(new Date());
   const [selectedService, setSelectedService] = useState<number | null>(null);
   const [selectedTimeSlot, setSelectedTimeSlot] = useState<string | null>(null);
@@ -75,9 +78,15 @@ export default function BookingPage() {
     enabled: !!date && !!selectedService && !!selectedProfessional,
   });
 
+  // Fetch users
+  const { data: users = [] } = useQuery<any[]>({
+    queryKey: ["/api/users"],
+  });
+
   // Create appointment mutation
   const createAppointmentMutation = useMutation({
     mutationFn: async (appointmentData: any) => {
+      console.log("Dados do agendamento a serem enviados:", appointmentData);
       const res = await apiRequest("POST", "/api/appointments", appointmentData);
       return await res.json();
     },
@@ -206,19 +215,19 @@ export default function BookingPage() {
     <div className="min-h-screen flex flex-col bg-background">
       <Header />
 
-      <main className="flex-1 container max-w-7xl mx-auto px-4 sm:px-6 py-8">
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold tracking-tight">Agendamento de Serviços</h1>
-          <p className="text-muted-foreground mt-2">
+      <main className="flex-1 container mx-auto px-4 sm:px-6 py-6 sm:py-8 max-w-6xl">
+        <div className="mb-6 sm:mb-8 text-center">
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Agendamento de Serviços</h1>
+          <p className="text-muted-foreground mt-2 text-sm sm:text-base">
             Escolha o serviço, data, horário e profissional para agendar seu atendimento
           </p>
         </div>
 
-        <div className="grid gap-6 md:gap-8 md:grid-cols-12">
+        <div className="grid gap-4 sm:gap-6 md:gap-8 grid-cols-1 md:grid-cols-12">
           {/* Service selection */}
           <Card className="md:col-span-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <Scissors className="h-5 w-5 text-purple-600" />
                 Serviço
               </CardTitle>
@@ -226,7 +235,7 @@ export default function BookingPage() {
             </CardHeader>
             <CardContent>
               <RadioGroup value={selectedService?.toString()} onValueChange={(value) => setSelectedService(parseInt(value))}>
-                <div className="space-y-4">
+                <div className="space-y-3 sm:space-y-4">
                   {services.map((service) => (
                     <div key={service.id} className="flex items-start space-x-3 space-y-0">
                       <RadioGroupItem value={service.id.toString()} id={`service-${service.id}`} />
@@ -253,8 +262,8 @@ export default function BookingPage() {
 
           {/* Date and time selection */}
           <Card className="md:col-span-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <CalendarIcon className="h-5 w-5 text-purple-600" />
                 Data e Horário
               </CardTitle>
@@ -300,7 +309,7 @@ export default function BookingPage() {
                   {isAppointmentsLoading ? (
                     <p className="text-sm text-muted-foreground">Carregando horários...</p>
                   ) : availableTimeSlots.length > 0 ? (
-                    <div className="grid grid-cols-3 gap-2">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                       {availableTimeSlots.map((timeSlot) => (
                         <Button
                           key={timeSlot}
@@ -310,6 +319,7 @@ export default function BookingPage() {
                             selectedTimeSlot === timeSlot && "bg-purple-700 hover:bg-purple-800"
                           )}
                           onClick={() => setSelectedTimeSlot(timeSlot)}
+                          size={isMobile ? "sm" : "default"}
                         >
                           {timeSlot}
                         </Button>
@@ -327,8 +337,8 @@ export default function BookingPage() {
 
           {/* Professional selection */}
           <Card className="md:col-span-4">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+            <CardHeader className="pb-3">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
                 <User className="h-5 w-5 text-purple-600" />
                 Profissional
               </CardTitle>
@@ -343,7 +353,7 @@ export default function BookingPage() {
                 <p className="text-sm text-muted-foreground">Nenhum profissional disponível para este serviço</p>
               ) : (
                 <RadioGroup value={selectedProfessional?.toString()} onValueChange={(value) => setSelectedProfessional(parseInt(value))}>
-                  <div className="space-y-4">
+                  <div className="space-y-3 sm:space-y-4">
                     {professionals.map((professional) => (
                       <div key={professional.id} className="flex items-start space-x-3 space-y-0">
                         <RadioGroupItem value={professional.id.toString()} id={`professional-${professional.id}`} />
@@ -363,12 +373,12 @@ export default function BookingPage() {
         </div>
 
         {/* Booking summary and submit button */}
-        <Card className="mt-8">
-          <CardHeader>
-            <CardTitle>Resumo do Agendamento</CardTitle>
+        <Card className="mt-6 sm:mt-8">
+          <CardHeader className="pb-3">
+            <CardTitle className="text-lg sm:text-xl">Resumo do Agendamento</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid gap-4 md:grid-cols-4">
+            <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-4">
               <div>
                 <h3 className="font-medium text-sm text-muted-foreground mb-1">Serviço</h3>
                 <p className="font-medium">{serviceDetails?.name || "Não selecionado"}</p>
@@ -393,7 +403,7 @@ export default function BookingPage() {
           <CardFooter className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
             <Button
               className="w-full sm:w-auto bg-purple-700 hover:bg-purple-800"
-              size="lg"
+              size={isMobile ? "default" : "lg"}
               onClick={handleConfirmationOpen}
               disabled={!selectedService || !selectedTimeSlot || !selectedProfessional || createAppointmentMutation.isPending}
             >
@@ -403,7 +413,7 @@ export default function BookingPage() {
         </Card>
 
         {/* Footer with map */}
-        <footer className="mt-16 border-t pt-8">
+        <footer className="mt-12 sm:mt-16 border-t pt-8">
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
             <div>
               <h3 className="text-lg font-medium">Salão de Beleza & Barbearia</h3>

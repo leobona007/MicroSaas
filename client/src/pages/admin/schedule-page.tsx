@@ -87,9 +87,15 @@ export default function SchedulePage() {
     queryKey: ["/api/services"],
   });
 
+  // Fetch users
+  const { data: users = [] } = useQuery<any[]>({
+    queryKey: ["/api/users"],
+  });
+
   // Create appointment mutation
   const createAppointmentMutation = useMutation({
     mutationFn: async (data: any) => {
+      console.log("Enviando dados para criação de agendamento:", data);
       const res = await apiRequest("POST", "/api/appointments", data);
       return await res.json();
     },
@@ -100,8 +106,10 @@ export default function SchedulePage() {
       });
       setOpenNewAppointment(false);
       queryClient.invalidateQueries({ queryKey: ["/api/appointments"] });
+      form.reset();
     },
     onError: (error: Error) => {
+      console.error("Erro ao criar agendamento:", error);
       toast({
         title: "Erro ao criar agendamento",
         description: error.message,
@@ -145,7 +153,7 @@ export default function SchedulePage() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      userId: 1, // Default to first user for simplicity
+      userId: 0, // Valor padrão atualizado para 0 (nenhum usuário selecionado)
       professionalId: 0,
       serviceId: 0,
       date: selectedDate,
@@ -175,17 +183,27 @@ export default function SchedulePage() {
     const [hours, minutes] = values.startTime.split(":").map(Number);
     const startDate = new Date(values.date);
     startDate.setHours(hours, minutes, 0, 0);
-    
+
     const endDate = new Date(startDate);
     endDate.setMinutes(endDate.getMinutes() + service.duration);
-    
+
     const formattedEndTime = `${endDate.getHours().toString().padStart(2, '0')}:${endDate.getMinutes().toString().padStart(2, '0')}`;
 
-    createAppointmentMutation.mutate({
-      ...values,
+    // Criar objeto de agendamento com todos os dados necessários
+    const appointmentData = {
+      userId: values.userId,
+      professionalId: values.professionalId, // Corrected: Using correct professionalId
+      serviceId: values.serviceId,
+      date: format(values.date, "yyyy-MM-dd"),
+      startTime: values.startTime,
       endTime: formattedEndTime,
       status: "scheduled",
-    });
+      notes: values.notes || "",
+    };
+
+    console.log("Dados do agendamento a serem enviados:", appointmentData);
+
+    createAppointmentMutation.mutate(appointmentData);
   };
 
   // Filter appointments
@@ -216,7 +234,7 @@ export default function SchedulePage() {
   const getAppointmentDetails = (appointment: Appointment) => {
     const service = services.find(s => s.id === appointment.serviceId);
     const professional = professionals.find(p => p.id === appointment.professionalId);
-    
+
     return {
       serviceName: service?.name || "Serviço desconhecido",
       professionalName: professional?.name || "Profissional desconhecido",
@@ -232,7 +250,7 @@ export default function SchedulePage() {
       | "outline"
       | null
       | undefined = "default";
-    
+
     switch (status) {
       case "completed":
         variant = "default";
@@ -247,14 +265,14 @@ export default function SchedulePage() {
         variant = "outline";
         break;
     }
-    
+
     const statusMap: Record<string, string> = {
       completed: "Concluído",
       scheduled: "Agendado",
       cancelled: "Cancelado",
       "no-show": "Não Compareceu",
     };
-    
+
     return <Badge variant={variant}>{statusMap[status] || status}</Badge>;
   };
 
@@ -269,12 +287,12 @@ export default function SchedulePage() {
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
-      
+
       <div className="flex-1 flex flex-col ml-64">
         <div className="p-8">
           <div className="flex justify-between items-center mb-6">
             <h1 className="text-3xl font-bold tracking-tight">Agenda</h1>
-            
+
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
@@ -286,7 +304,7 @@ export default function SchedulePage() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              
+
               <Popover open={openFilter} onOpenChange={setOpenFilter}>
                 <PopoverTrigger asChild>
                   <Button variant="outline">
@@ -297,7 +315,7 @@ export default function SchedulePage() {
                 <PopoverContent className="w-[280px] p-4">
                   <div className="space-y-4">
                     <h4 className="font-medium">Filtrar Agendamentos</h4>
-                    
+
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Profissional</label>
                       <Select
@@ -317,7 +335,7 @@ export default function SchedulePage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Serviço</label>
                       <Select
@@ -337,7 +355,7 @@ export default function SchedulePage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="space-y-2">
                       <label className="text-sm font-medium">Status</label>
                       <Select
@@ -356,7 +374,7 @@ export default function SchedulePage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    
+
                     <div className="flex items-center justify-between pt-2">
                       <Button
                         variant="outline"
@@ -382,7 +400,7 @@ export default function SchedulePage() {
                   </div>
                 </PopoverContent>
               </Popover>
-              
+
               <Dialog open={openNewAppointment} onOpenChange={setOpenNewAppointment}>
                 <DialogTrigger asChild>
                   <Button>
@@ -397,9 +415,41 @@ export default function SchedulePage() {
                       Preencha os dados abaixo para criar um novo agendamento.
                     </DialogDescription>
                   </DialogHeader>
-                  
+
                   <Form {...form}>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4 pt-4">
+                      <FormField
+                        control={form.control}
+                        name="userId"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Cliente</FormLabel>
+                            <Select
+                              onValueChange={(value) => field.onChange(parseInt(value))}
+                              defaultValue={field.value ? field.value.toString() : ""}
+                            >
+                              <FormControl>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Selecione um cliente" />
+                                </SelectTrigger>
+                              </FormControl>
+                              <SelectContent>
+                                {users && users.length > 0 ? (
+                                  users.map((user) => (
+                                    <SelectItem key={user.id} value={user.id.toString()}>
+                                      {user.name || user.username}
+                                    </SelectItem>
+                                  ))
+                                ) : (
+                                  <SelectItem value="1">Cliente 1</SelectItem>
+                                )}
+                              </SelectContent>
+                            </Select>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
                       <FormField
                         control={form.control}
                         name="professionalId"
@@ -408,7 +458,7 @@ export default function SchedulePage() {
                             <FormLabel>Profissional</FormLabel>
                             <Select
                               onValueChange={(value) => field.onChange(parseInt(value))}
-                              defaultValue={field.value.toString()}
+                              defaultValue={field.value ? field.value.toString() : ""}
                             >
                               <FormControl>
                                 <SelectTrigger>
@@ -427,7 +477,7 @@ export default function SchedulePage() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <FormField
                         control={form.control}
                         name="serviceId"
@@ -436,7 +486,7 @@ export default function SchedulePage() {
                             <FormLabel>Serviço</FormLabel>
                             <Select
                               onValueChange={(value) => field.onChange(parseInt(value))}
-                              defaultValue={field.value.toString()}
+                              defaultValue={field.value ? field.value.toString() : ""}
                             >
                               <FormControl>
                                 <SelectTrigger>
@@ -455,7 +505,7 @@ export default function SchedulePage() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <div className="grid grid-cols-2 gap-4">
                         <FormField
                           control={form.control}
@@ -501,7 +551,7 @@ export default function SchedulePage() {
                             </FormItem>
                           )}
                         />
-                        
+
                         <FormField
                           control={form.control}
                           name="startTime"
@@ -516,7 +566,7 @@ export default function SchedulePage() {
                           )}
                         />
                       </div>
-                      
+
                       <FormField
                         control={form.control}
                         name="notes"
@@ -530,7 +580,7 @@ export default function SchedulePage() {
                           </FormItem>
                         )}
                       />
-                      
+
                       <DialogFooter>
                         <Button
                           type="button"
@@ -549,7 +599,7 @@ export default function SchedulePage() {
               </Dialog>
             </div>
           </div>
-          
+
           <div className="grid gap-6 md:grid-cols-1 lg:grid-cols-[300px_1fr]">
             {/* Calendar */}
             <Card>
@@ -565,7 +615,7 @@ export default function SchedulePage() {
                 />
               </CardContent>
             </Card>
-            
+
             {/* Appointments List */}
             <Card>
               <CardHeader>
