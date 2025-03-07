@@ -430,7 +430,6 @@ export default function ProfessionalsPage() {
   };
   
   return (
-<<<<<<< HEAD
     <div className="flex min-h-screen bg-background">
       <Sidebar />
       
@@ -441,25 +440,11 @@ export default function ProfessionalsPage() {
             
             <div className="flex items-center gap-4">
               <div className="relative">
-=======
-    <Sidebar>
-      <div className="flex flex-col space-y-6">
-      
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <h1 className="text-2xl md:text-3xl font-bold tracking-tight">Profissionais</h1>
-            
-            <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full md:w-auto">
-              <div className="relative w-full md:w-auto">
->>>>>>> 857c171 (first commit)
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
                   type="search"
                   placeholder="Buscar profissional..."
-<<<<<<< HEAD
                   className="w-[250px] pl-8"
-=======
-                  className="w-full md:w-[250px] pl-8"
->>>>>>> 857c171 (first commit)
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
@@ -467,11 +452,7 @@ export default function ProfessionalsPage() {
               
               <Dialog open={newProfessionalOpen} onOpenChange={setNewProfessionalOpen}>
                 <DialogTrigger asChild>
-<<<<<<< HEAD
                   <Button>
-=======
-                  <Button className="w-full md:w-auto">
->>>>>>> 857c171 (first commit)
                     <Plus className="mr-2 h-4 w-4" />
                     Novo Profissional
                   </Button>
@@ -630,7 +611,6 @@ export default function ProfessionalsPage() {
                   {searchQuery ? "Nenhum profissional encontrado com este termo." : "Nenhum profissional cadastrado."}
                 </div>
               ) : (
-<<<<<<< HEAD
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -640,18 +620,6 @@ export default function ProfessionalsPage() {
                       <TableHead>Endereço</TableHead>
                       <TableHead>Status</TableHead>
                       <TableHead className="text-right">Ações</TableHead>
-=======
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead className="w-[200px] md:w-[300px]">Profissional</TableHead>
-                        <TableHead>Contato</TableHead>
-                        <TableHead className="hidden md:table-cell">CPF</TableHead>
-                        <TableHead className="hidden md:table-cell">Endereço</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Ações</TableHead>
->>>>>>> 857c171 (first commit)
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -679,13 +647,8 @@ export default function ProfessionalsPage() {
                             </div>
                           </div>
                         </TableCell>
-<<<<<<< HEAD
                         <TableCell>{professional.cpf}</TableCell>
                         <TableCell>
-=======
-                        <TableCell className="hidden md:table-cell">{professional.cpf}</TableCell>
-                        <TableCell className="hidden md:table-cell">
->>>>>>> 857c171 (first commit)
                           <div className="flex items-start">
                             <MapPin className="h-4 w-4 mr-1 mt-0.5 text-muted-foreground shrink-0" />
                             <span className="text-sm line-clamp-2">{professional.address}</span>
@@ -729,10 +692,6 @@ export default function ProfessionalsPage() {
                     ))}
                   </TableBody>
                 </Table>
-<<<<<<< HEAD
-=======
-              </div>
->>>>>>> 857c171 (first commit)
               )}
             </CardContent>
           </Card>
@@ -1180,11 +1139,7 @@ export default function ProfessionalsPage() {
             </AlertDialogContent>
           </AlertDialog>
         </div>
-<<<<<<< HEAD
       </div>
     </div>
-=======
-          </Sidebar>
->>>>>>> 857c171 (first commit)
   );
 }

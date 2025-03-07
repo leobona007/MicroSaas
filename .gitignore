@@ -1,23 +1,6 @@
-# Dependências
-node_modules/
-
-# Saídas de build
-dist/
-server/public/
-
-# Arquivos de configuração de ambiente e segredos
-.env
-.env.*
-
-# Banco de dados
-*.db
-*.db-journal
-
-# Arquivos de IDE e sistema operacional
+node_modules
+dist
 .DS_Store
-.idea/
-.vscode/
-
-# Artefatos de build
-vite.config.ts*
+server/public
+vite.config.ts.*
 *.tar.gz
