@@ -321,10 +321,17 @@ export default function BookingPage() {
                             {availableTimeSlots.map((timeSlot) => (
                               <Button
                                 key={timeSlot}
+<<<<<<< HEAD
                                 variant={selectedTimeSlot === timeSlot ? "default" : "outline"}
                                 className={cn(
                                   "text-center",
                                   selectedTimeSlot === timeSlot && "bg-purple-700 hover:bg-purple-800"
+=======
+                                variant="outline"
+                                className={cn(
+                                  "text-center border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-400",
+                                  selectedTimeSlot === timeSlot && "bg-orange-50 border-orange-500 text-orange-700"
+>>>>>>> 857c171 (first commit)
                                 )}
                                 onClick={() => setSelectedTimeSlot(timeSlot)}
                                 size="sm"
@@ -473,10 +480,17 @@ export default function BookingPage() {
                         {availableTimeSlots.map((timeSlot) => (
                           <Button
                             key={timeSlot}
+<<<<<<< HEAD
                             variant={selectedTimeSlot === timeSlot ? "default" : "outline"}
                             className={cn(
                               "text-center",
                               selectedTimeSlot === timeSlot && "bg-purple-700 hover:bg-purple-800"
+=======
+                            variant="outline"
+                            className={cn(
+                              "text-center border-orange-300 text-orange-600 hover:bg-orange-50 hover:text-orange-700 hover:border-orange-400",
+                              selectedTimeSlot === timeSlot && "bg-orange-50 border-orange-500 text-orange-700"
+>>>>>>> 857c171 (first commit)
                             )}
                             onClick={() => setSelectedTimeSlot(timeSlot)}
                             size={isMobile ? "sm" : "default"}

@@ -3,6 +3,10 @@ import { useQuery, useMutation } from "@tanstack/react-query";
 import { Transaction, InsertTransaction } from "@shared/schema";
 import { Sidebar } from "@/components/layout/sidebar";
 import { Button } from "@/components/ui/button";
+<<<<<<< HEAD
+=======
+import { useMobile } from "@/hooks/use-mobile";
+>>>>>>> 857c171 (first commit)
 import {
   Table,
   TableBody,
@@ -48,11 +52,19 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
+<<<<<<< HEAD
+=======
+import { ScrollArea } from "@/components/ui/scroll-area";
+>>>>>>> 857c171 (first commit)
 
 export default function FinancePage() {
   const { toast } = useToast();
   const [dateRange, setDateRange] = useState<"today" | "week" | "month" | "year">("month");
   const [newTransactionOpen, setNewTransactionOpen] = useState(false);
+<<<<<<< HEAD
+=======
+  const isMobile = useMobile();
+>>>>>>> 857c171 (first commit)
   
   // Calculate date ranges
   const today = new Date();
@@ -103,6 +115,7 @@ export default function FinancePage() {
     },
   });
   
+<<<<<<< HEAD
   // New transaction form schema
   const formSchema = z.object({
     type: z.enum(["income", "expense"]),
@@ -112,6 +125,18 @@ export default function FinancePage() {
     appointmentId: z.coerce.number().optional(),
   });
   
+=======
+  // Form schema for new transaction
+  const formSchema = z.object({
+    type: z.enum(["income", "expense"]),
+    amount: z.coerce.number().positive({ message: "O valor deve ser maior que zero" }),
+    description: z.string().min(1, { message: "Descrição é obrigatória" }),
+    date: z.date({ required_error: "Data é obrigatória" }),
+    appointmentId: z.string().optional(),
+  });
+  
+  // Form for new transaction
+>>>>>>> 857c171 (first commit)
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -119,6 +144,7 @@ export default function FinancePage() {
       amount: 0,
       description: "",
       date: new Date(),
+<<<<<<< HEAD
     },
   });
   
@@ -142,6 +168,37 @@ export default function FinancePage() {
   
   transactions.forEach(transaction => {
     const date = format(new Date(transaction.date), 'yyyy-MM-dd');
+=======
+      appointmentId: undefined,
+    },
+  });
+  
+  // Handle form submission
+  const onSubmit = (values: z.infer<typeof formSchema>) => {
+    createTransactionMutation.mutate({
+      ...values,
+      date: format(values.date, "yyyy-MM-dd"),
+      appointmentId: values.appointmentId ? parseInt(values.appointmentId) : undefined,
+    });
+  };
+  
+  // Calculate summary
+  const income = transactions
+    .filter(t => t.type === "income")
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const expenses = transactions
+    .filter(t => t.type === "expense")
+    .reduce((sum, t) => sum + t.amount, 0);
+  
+  const balance = income - expenses;
+  
+  // Group transactions by date
+  const groupedTransactions: Record<string, Transaction[]> = {};
+  
+  transactions.forEach(transaction => {
+    const date = transaction.date;
+>>>>>>> 857c171 (first commit)
     if (!groupedTransactions[date]) {
       groupedTransactions[date] = [];
     }
@@ -149,6 +206,7 @@ export default function FinancePage() {
   });
   
   // Sort dates in descending order
+<<<<<<< HEAD
   const sortedDates = Object.keys(groupedTransactions).sort().reverse();
   
   return (
@@ -368,6 +426,227 @@ export default function FinancePage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
+=======
+  const sortedDates = Object.keys(groupedTransactions).sort((a, b) => {
+    return new Date(b).getTime() - new Date(a).getTime();
+  });
+  
+  return (
+    <Sidebar>
+      <div className="flex flex-col space-y-6">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+          <h1 className="text-2xl font-bold tracking-tight">Financeiro</h1>
+          
+          <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+            <Tabs
+              defaultValue="month"
+              value={dateRange}
+              onValueChange={(value) => setDateRange(value as "today" | "week" | "month" | "year")}
+              className="w-full sm:w-auto"
+            >
+              <TabsList className="grid w-full grid-cols-4">
+                <TabsTrigger value="today">Hoje</TabsTrigger>
+                <TabsTrigger value="week">Semana</TabsTrigger>
+                <TabsTrigger value="month">Mês</TabsTrigger>
+                <TabsTrigger value="year">Ano</TabsTrigger>
+              </TabsList>
+            </Tabs>
+            
+            <Dialog open={newTransactionOpen} onOpenChange={setNewTransactionOpen}>
+              <DialogTrigger asChild>
+                <Button className="w-full sm:w-auto">
+                  <PlusCircle className="mr-2 h-4 w-4" />
+                  Nova Transação
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Nova Transação</DialogTitle>
+                  <DialogDescription>
+                    Registre uma nova transação financeira.
+                  </DialogDescription>
+                </DialogHeader>
+                
+                <Form {...form}>
+                  <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+                    <FormField
+                      control={form.control}
+                      name="type"
+                      render={({ field }) => (
+                        <FormItem className="space-y-3">
+                          <FormLabel>Tipo de Transação</FormLabel>
+                          <FormControl>
+                            <RadioGroup
+                              onValueChange={field.onChange}
+                              defaultValue={field.value}
+                              className="flex space-x-4"
+                            >
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="income" id="income" />
+                                <Label htmlFor="income" className="flex items-center">
+                                  <ArrowUpCircle className="mr-2 h-4 w-4 text-green-500" />
+                                  Receita
+                                </Label>
+                              </div>
+                              <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="expense" id="expense" />
+                                <Label htmlFor="expense" className="flex items-center">
+                                  <ArrowDownCircle className="mr-2 h-4 w-4 text-red-500" />
+                                  Despesa
+                                </Label>
+                              </div>
+                            </RadioGroup>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="amount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Valor (R$)</FormLabel>
+                          <FormControl>
+                            <div className="relative">
+                              <DollarSign className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
+                              <Input type="number" step="0.01" min="0" placeholder="0.00" className="pl-8" {...field} />
+                            </div>
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="description"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Descrição</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Descreva a transação" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <FormField
+                      control={form.control}
+                      name="date"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-col">
+                          <FormLabel>Data</FormLabel>
+                          <Popover>
+                            <PopoverTrigger asChild>
+                              <FormControl>
+                                <Button
+                                  variant={"outline"}
+                                  className="w-full pl-3 text-left font-normal"
+                                >
+                                  {field.value ? (
+                                    format(field.value, "PPP", { locale: ptBR })
+                                  ) : (
+                                    <span>Selecione uma data</span>
+                                  )}
+                                  <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                </Button>
+                              </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                              <Calendar
+                                mode="single"
+                                selected={field.value}
+                                onSelect={field.onChange}
+                                disabled={(date) =>
+                                  date > new Date() || date < new Date("1900-01-01")
+                                }
+                                initialFocus
+                              />
+                            </PopoverContent>
+                          </Popover>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    
+                    <DialogFooter>
+                      <Button type="submit" disabled={createTransactionMutation.isPending}>
+                        {createTransactionMutation.isPending ? "Salvando..." : "Salvar"}
+                      </Button>
+                    </DialogFooter>
+                  </form>
+                </Form>
+              </DialogContent>
+            </Dialog>
+          </div>
+        </div>
+        
+        {/* Summary Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Receitas
+              </CardTitle>
+              <ArrowUpCircle className="h-4 w-4 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">R$ {income.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                No período selecionado
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Despesas
+              </CardTitle>
+              <ArrowDownCircle className="h-4 w-4 text-red-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-red-600">R$ {expenses.toFixed(2)}</div>
+              <p className="text-xs text-muted-foreground">
+                No período selecionado
+              </p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">
+                Saldo
+              </CardTitle>
+              <DollarSign className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className={cn(
+                "text-2xl font-bold",
+                balance >= 0 ? "text-green-600" : "text-red-600"
+              )}>
+                R$ {balance.toFixed(2)}
+              </div>
+              <p className="text-xs text-muted-foreground">
+                No período selecionado
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Transactions Table */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Transações</CardTitle>
+            <CardDescription>
+              Histórico de transações financeiras.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+>>>>>>> 857c171 (first commit)
               {isTransactionsLoading ? (
                 <div className="text-center py-4">Carregando transações...</div>
               ) : sortedDates.length === 0 ? (
@@ -440,6 +719,7 @@ export default function FinancePage() {
                   ))}
                 </div>
               )}
+<<<<<<< HEAD
             </CardContent>
           </Card>
           
@@ -495,5 +775,61 @@ export default function FinancePage() {
         </div>
       </div>
     </div>
+=======
+          </CardContent>
+        </Card>
+        
+        {/* Outstanding Debts */}
+        <Card className="mt-6">
+          <CardHeader>
+            <CardTitle>Clientes em Débito</CardTitle>
+            <CardDescription>
+              Agendamentos com pagamentos pendentes
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Cliente</TableHead>
+                  <TableHead>Serviço</TableHead>
+                  <TableHead>Data</TableHead>
+                  <TableHead className="text-right">Valor</TableHead>
+                  <TableHead className="text-right">Ações</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {/* Example row */}
+                <TableRow>
+                  <TableCell>Ana Silva</TableCell>
+                  <TableCell>Coloração</TableCell>
+                  <TableCell>{format(subDays(new Date(), 3), "dd/MM/yyyy")}</TableCell>
+                  <TableCell className="text-right">R$ 120,00</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="outline" size="sm">
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      Registrar Pagamento
+                    </Button>
+                  </TableCell>
+                </TableRow>
+                <TableRow>
+                  <TableCell>Carlos Mendes</TableCell>
+                  <TableCell>Corte e Barba</TableCell>
+                  <TableCell>{format(subDays(new Date(), 5), "dd/MM/yyyy")}</TableCell>
+                  <TableCell className="text-right">R$ 70,00</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="outline" size="sm">
+                      <DollarSign className="h-4 w-4 mr-1" />
+                      Registrar Pagamento
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+      </div>
+     </Sidebar>
+>>>>>>> 857c171 (first commit)
   );
 }
